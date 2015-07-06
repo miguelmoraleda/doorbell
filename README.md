@@ -28,7 +28,7 @@ npm run build
 * Configurable busy mode view. (Rectangle, Circle or none)
 * Auto updater.
 * Add a time based activation.
-
+* Create new icon for the app.
 
 ## Contributing
 Please feel free to send PR to this project.
