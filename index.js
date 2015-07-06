@@ -4,18 +4,55 @@ var BrowserWindow = require('browser-window');  // Module to create native brows
 var globalShortcut = require('global-shortcut');
 var Menu = require('menu');
 var Tray = require('tray');
+var ipc = require('ipc');
+var AutoLaunch = require('auto-launch');
+
+
+var nwAppLauncher = new AutoLaunch({
+    name: 'My node webkit app yao'
+});
+
+nwAppLauncher.isEnabled(function(enabled){
+    if(enabled) return;
+
+    nwAppLauncher.enable(function(err){
+
+    });
+
+});
+
+nwAppLauncher.enable();
+
+ipc.on('asynchronous-message', function(event, arg) {
+  console.log(arg);  // prints "ping"
+  event.sender.send('asynchronous-reply', 'pong');
+});
+
+ipc.on('close-config', function(event, arg) {
+  if(configPanel) {
+    configPanel.close();
+  }
+});
+
+ipc.on('synchronous-message', function(event, arg) {
+  console.log(arg);  // prints "ping"
+  event.returnValue = 'pong';
+});
 
 // Report crashes to our server.
 require('crash-reporter').start();
 
-require('electron-debug')();
+//require('electron-debug')();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the javascript object is GCed.
 var configPanel = null;
 var mainWindow = null;
 var appIcon = null;
-var activationShortcut = 'cmd+1';
+var workArea = null;
+var bounds = null;
+var activationShortcut = 'cmd+shift+1';
+var rectangleAlert = [];
 
 var isBusy = false;
 var showingConfigs = false;
@@ -32,8 +69,9 @@ app.on('window-all-closed', function() {
 // initialization and ready for creating browser windows.
 app.on('ready', function() {
   var atomScreen = require('screen');
-  var size = atomScreen.getPrimaryDisplay().workAreaSize;
-
+  console.log(atomScreen.getPrimaryDisplay());
+  workArea = atomScreen.getPrimaryDisplay().workArea;
+  bounds = atomScreen.getPrimaryDisplay().bounds;
   createMainWindow();
 
   //createConfigPanel();
@@ -46,7 +84,6 @@ app.on('ready', function() {
 });
 
 function configShortcuts() {
-  var ret = globalShortcut.register('ctrl+x', toogleBusyMode);
   var ret = globalShortcut.register(activationShortcut, toogleBusyMode);
 }
 
@@ -55,6 +92,7 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
                                   x: 0,
                                   y: 0,
+                                  'skip-taskbar': true,
                                   resizable: false,
                                   width: 50,
                                   height: 50,
@@ -79,11 +117,55 @@ function createMainWindow() {
   });
 }
 
+function createRectangleAlert() {
+
+  var areas = [
+    { x: 0, y: workArea.y, w: 5, h: workArea.height },
+    { x: 0, y: workArea.y, w: workArea.width, h: 5 },
+    { x: 0, y: bounds.height+workArea.y - 5, w: workArea.width, h: 5 },
+    { x: workArea.width-5, y: workArea.y, w: 5, h: workArea.height },
+  ]
+
+  for (var i = 0; i < 4; i++) {
+    rectangleAlert[i] = new BrowserWindow({
+                                    x: areas[i].x,
+                                    'skip-taskbar': true,
+                                    'enable-larger-than-screen': true,
+                                    y: areas[i].y,
+                                    resizable: false,
+                                    width: areas[i].w,
+                                    height: areas[i].h,
+                                    show: true,
+                                    'always-on-top': true,
+                                    frame: false,
+                                    transparent: true});
+
+    // and load the index.html of the app.
+    rectangleAlert[i].loadUrl('file://' + __dirname + '/rectangle.html');
+
+    rectangleAlert[i].on('closed', function() {
+      // Dereference the window object, usually you would store windows
+      // in an array if your app supports multi windows, this is the time
+      // when you should delete the corresponding element.
+      rectangleAlert[i] = null;
+    });
+  }
+}
+
+function destroyRectangleAlert() {
+  for (var i = 0; i < 4; i++) {
+    if(rectangleAlert[i]) {
+      rectangleAlert[i].close();
+    }
+  }
+}
+
 function createConfigPanel() {
   // Create the browser window.
   configPanel = new BrowserWindow({
                                   resizable: false,
                                   width: 500,
+                                  'skip-taskbar': true,
                                   height: 350,
                                   show: true,
                                   'always-on-top': true,
@@ -106,7 +188,7 @@ function createConfigPanel() {
 }
 
 function createTrayIcon() {
-  appIcon = new Tray(__dirname + '/bell.png');
+  appIcon = new Tray(__dirname + '/bell-icon.png');
 
   var contextMenu = Menu.buildFromTemplate([
     { label: 'Active', click: function() {activeBusyMode();} },
@@ -133,15 +215,19 @@ function toogleBusyMode() {
 }
 
 function activeBusyMode() {
-  console.log('Busy Mode Actived');
+  //console.log('Busy Mode Actived');
   if(mainWindow) {
-    mainWindow.show();
+    //mainWindow.show();
+
   }
+  createRectangleAlert();
 }
 
 function deactiveBusyMode() {
-  console.log('Busy Mode Desactived');
+  //console.log('Busy Mode Desactived');
   if(mainWindow) {
-    mainWindow.hide();
+    //mainWindow.hide();
+
   }
+  destroyRectangleAlert()
 }

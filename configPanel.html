@@ -9,9 +9,32 @@
   <body>
     <div class="config-panel">
       <div class="form-group">
-        <label for="exampleInputEmail1">Active Shortcut</label>
-        <input type="text" class="form-control" id="exampleInputEmail1">
+        <label for="actoveShortcut">Active Shortcut</label>
+        <input type="text" class="form-control" id="activeShortcut" disabled>
       </div>
+      <div>
+        <label for="forAlertView">Active View Mode</label>
+        <div class="radio">
+          <label>
+            <input type="radio" name="optionsRadios" id="optionsRadios1" value="option1" checked>
+            Rectangle
+          </label>
+        </div>
+        <div class="radio">
+          <label>
+            <input type="radio" name="optionsRadios" id="optionsRadios2" value="option2">
+            Circle
+          </label>
+        </div>
+        <div class="radio disabled">
+          <label>
+            <input type="radio" name="optionsRadios" id="optionsRadios3" value="option3">
+            None
+          </label>
+        </div>
+      </div>
+      <button id="done-button" type="button" class="btn btn-primary btn-lg active">Done</button>
 		</div>
+    <script src="config.js"></script>
   </body>
 </html>
