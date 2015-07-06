@@ -2,7 +2,6 @@ html,
 body {
 	padding: 0;
 	margin: 0;
-	pointer-events: none;
 }
 
 .container {
@@ -10,4 +9,8 @@ body {
   width: 100%;
   height: 100%;
 	background-color: red;
+}
+
+.config-panel {
+	margin: 20px;
 }

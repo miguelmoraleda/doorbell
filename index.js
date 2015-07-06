@@ -12,10 +12,13 @@ require('electron-debug')();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the javascript object is GCed.
+var configPanel = null;
 var mainWindow = null;
 var appIcon = null;
+var activationShortcut = 'cmd+1';
 
 var isBusy = false;
+var showingConfigs = false;
 
 
 // Quit when all windows are closed.
@@ -31,9 +34,11 @@ app.on('ready', function() {
   var atomScreen = require('screen');
   var size = atomScreen.getPrimaryDisplay().workAreaSize;
 
-  createTrayIcon();
-
   createMainWindow();
+
+  //createConfigPanel();
+
+  createTrayIcon();
 
   configShortcuts();
 
@@ -42,7 +47,7 @@ app.on('ready', function() {
 
 function configShortcuts() {
   var ret = globalShortcut.register('ctrl+x', toogleBusyMode);
-  var ret = globalShortcut.register('cmd+1', toogleBusyMode);
+  var ret = globalShortcut.register(activationShortcut, toogleBusyMode);
 }
 
 function createMainWindow() {
@@ -70,7 +75,33 @@ function createMainWindow() {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    mainWindow = null;
+    //mainWindow = null;
+  });
+}
+
+function createConfigPanel() {
+  // Create the browser window.
+  configPanel = new BrowserWindow({
+                                  resizable: false,
+                                  width: 500,
+                                  height: 350,
+                                  show: true,
+                                  'always-on-top': true,
+                                  frame: true,
+                                  transparent: false});
+
+  // and load the index.html of the app.
+  configPanel.loadUrl('file://' + __dirname + '/configPanel.html');
+
+  // Open the devtools.
+  //mainWindow.openDevTools();
+
+  // Emitted when the window is closed.
+  configPanel.on('closed', function() {
+    // Dereference the window object, usually you would store windows
+    // in an array if your app supports multi windows, this is the time
+    // when you should delete the corresponding element.
+    configPanel = null;
   });
 }
 
@@ -80,7 +111,7 @@ function createTrayIcon() {
   var contextMenu = Menu.buildFromTemplate([
     { label: 'Active', click: function() {activeBusyMode();} },
     { label: 'Deactive', click: function() {deactiveBusyMode();} },
-    { label: 'Preferences' },
+    { label: 'Preferences', click: function() { createConfigPanel(); } },
     { label: 'About' },
     { type: 'separator' },
     { label: 'Quit', click: function() { app.quit(); } },

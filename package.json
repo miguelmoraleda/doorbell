@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "electron app/.",
-    "build": "electron-packager app/. DoorBell --prune --asar --platform=darwin --arch=x64 --version=0.28.1"
+    "build": "electron-packager . DoorBell --platform=darwin --arch=x64 --version=0.29.1 --out=dist --overwrite=true --app-version=1.0"
   },
   "author": "Miguel Moraleda <miguel@jam3.com>",
   "license": "MIT",
@@ -14,9 +14,6 @@
   },
   "devDependencies": {
     "electron-packager": "^5.0.0",
-    "electron-prebuilt": "^0.29.1",
-    "grunt": "^0.4.5",
-    "grunt-electron": "^2.0.0",
-    "load-grunt-tasks": "^3.2.0"
+    "electron-prebuilt": "^0.29.1"
   }
 }
