@@ -5,27 +5,39 @@ var globalShortcut = require('global-shortcut');
 var Menu = require('menu');
 var Tray = require('tray');
 var ipc = require('ipc');
+
 var AutoLaunch = require('auto-launch');
 
+var autoStart = false;
 
-var nwAppLauncher = new AutoLaunch({
-    name: 'My node webkit app yao'
+var autoLauncher = new AutoLaunch({
+    name: 'DoorBell',
+    path: '/Applications/DoorBell.app',
+    isHidden: true // hidden on launch - only works on a mac atm.
 });
 
-nwAppLauncher.isEnabled(function(enabled){
-    if(enabled) return;
+autoLauncher.isEnabled(function(enabled) {
+  if(enabled) {
+    autoStart = true;
+    return;
+  } else {
+    autoStart = false;
+  }
+});
 
-    nwAppLauncher.enable(function(err){
-
+ipc.on('auto-launch-changed', function(event, arg) {
+  if(!autoLauncher) return;
+  autoStart = arg;
+  if(autoStart) {
+    autoLauncher.isEnabled(function(enabled) {
+      if(enabled) return;
+      autoLauncher.enable();
     });
-
-});
-
-nwAppLauncher.enable();
-
-ipc.on('asynchronous-message', function(event, arg) {
-  console.log(arg);  // prints "ping"
-  event.sender.send('asynchronous-reply', 'pong');
+  } else {
+    autoLauncher.isEnabled(function(enabled) {
+      if(enabled) autoLauncher.disable();
+    });
+  }
 });
 
 ipc.on('close-config', function(event, arg) {
@@ -34,10 +46,12 @@ ipc.on('close-config', function(event, arg) {
   }
 });
 
-ipc.on('synchronous-message', function(event, arg) {
+ipc.on('get-configurations', function(event, arg) {
   console.log(arg);  // prints "ping"
-  event.returnValue = 'pong';
+  //event.sender.send('load-configurations', { autoStart: autoStart });
+  event.sender.send('load-configurations', { autoStart: autoStart });
 });
+
 
 // Report crashes to our server.
 require('crash-reporter').start();
@@ -74,12 +88,9 @@ app.on('ready', function() {
   bounds = atomScreen.getPrimaryDisplay().bounds;
   createMainWindow();
 
-  //createConfigPanel();
-
   createTrayIcon();
 
   configShortcuts();
-
 
 });
 
