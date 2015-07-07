@@ -9,6 +9,7 @@ var ipc = require('ipc');
 var AutoLaunch = require('auto-launch');
 
 var autoStart = false;
+var alertViewMode = 'circle';
 
 var autoLauncher = new AutoLaunch({
     name: 'DoorBell',
@@ -22,6 +23,15 @@ autoLauncher.isEnabled(function(enabled) {
     return;
   } else {
     autoStart = false;
+  }
+});
+
+ipc.on('alert-view-changed', function(event, arg) {
+  alertViewMode = arg;
+
+  if(isBusy) {
+      deactiveBusyMode();
+      activeBusyMode();
   }
 });
 
@@ -47,7 +57,7 @@ ipc.on('close-config', function(event, arg) {
 });
 
 ipc.on('get-configurations', function(event, arg) {
-  console.log(arg);  // prints "ping"
+  //console.log(arg);  // prints "ping"
   //event.sender.send('load-configurations', { autoStart: autoStart });
   event.sender.send('load-configurations', { autoStart: autoStart });
 });
@@ -56,7 +66,7 @@ ipc.on('get-configurations', function(event, arg) {
 // Report crashes to our server.
 require('crash-reporter').start();
 
-//require('electron-debug')();
+require('electron-debug')();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the javascript object is GCed.
@@ -73,12 +83,12 @@ var showingConfigs = false;
 
 
 // Quit when all windows are closed.
-app.on('window-all-closed', function() {
+/*app.on('window-all-closed', function() {
   if (process.platform != 'darwin') {
     app.quit();
   }
 });
-
+*/
 // This method will be called when Electron has done everything
 // initialization and ready for creating browser windows.
 app.on('ready', function() {
@@ -86,12 +96,10 @@ app.on('ready', function() {
   console.log(atomScreen.getPrimaryDisplay());
   workArea = atomScreen.getPrimaryDisplay().workArea;
   bounds = atomScreen.getPrimaryDisplay().bounds;
-  createMainWindow();
 
   createTrayIcon();
 
   configShortcuts();
-
 });
 
 function configShortcuts() {
@@ -99,7 +107,6 @@ function configShortcuts() {
 }
 
 function createMainWindow() {
-  // Create the browser window.
   mainWindow = new BrowserWindow({
                                   x: 0,
                                   y: 0,
@@ -107,24 +114,14 @@ function createMainWindow() {
                                   resizable: false,
                                   width: 50,
                                   height: 50,
-                                  show: false,
+                                  show: true,
                                   'always-on-top': true,
                                   frame: false,
-                                  transparent: true,
-                                  fullscreen: false});
+                                  transparent: true});
 
-  // and load the index.html of the app.
   mainWindow.loadUrl('file://' + __dirname + '/index.html');
-
-  // Open the devtools.
-  //mainWindow.openDevTools();
-
-  // Emitted when the window is closed.
   mainWindow.on('closed', function() {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    //mainWindow = null;
+    mainWindow = null;
   });
 }
 
@@ -136,7 +133,7 @@ function createRectangleAlert() {
     { x: 0, y: bounds.height+workArea.y - 5, w: workArea.width, h: 5 },
     { x: workArea.width-5, y: workArea.y, w: 5, h: workArea.height },
   ]
-
+  rectangleAlert = [];
   for (var i = 0; i < 4; i++) {
     rectangleAlert[i] = new BrowserWindow({
                                     x: areas[i].x,
@@ -153,26 +150,20 @@ function createRectangleAlert() {
 
     // and load the index.html of the app.
     rectangleAlert[i].loadUrl('file://' + __dirname + '/rectangle.html');
-
-    rectangleAlert[i].on('closed', function() {
-      // Dereference the window object, usually you would store windows
-      // in an array if your app supports multi windows, this is the time
-      // when you should delete the corresponding element.
-      rectangleAlert[i] = null;
-    });
   }
 }
 
 function destroyRectangleAlert() {
   for (var i = 0; i < 4; i++) {
-    if(rectangleAlert[i]) {
+    if(rectangleAlert[i] !== undefined) {
       rectangleAlert[i].close();
+      rectangleAlert[i] = null;
+      delete rectangleAlert[i];
     }
   }
 }
 
 function createConfigPanel() {
-  // Create the browser window.
   configPanel = new BrowserWindow({
                                   resizable: false,
                                   width: 500,
@@ -183,17 +174,8 @@ function createConfigPanel() {
                                   frame: true,
                                   transparent: false});
 
-  // and load the index.html of the app.
   configPanel.loadUrl('file://' + __dirname + '/configPanel.html');
-
-  // Open the devtools.
-  //mainWindow.openDevTools();
-
-  // Emitted when the window is closed.
   configPanel.on('closed', function() {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
     configPanel = null;
   });
 }
@@ -212,33 +194,41 @@ function createTrayIcon() {
 
   appIcon.setToolTip('DoorBell by Michael Dobell.');
   appIcon.setContextMenu(contextMenu);
-
 }
 
 function toogleBusyMode() {
   if(isBusy) {
-    isBusy = false;
     deactiveBusyMode();
   } else {
-    isBusy = true;
     activeBusyMode();
   }
 }
 
 function activeBusyMode() {
-  //console.log('Busy Mode Actived');
-  if(mainWindow) {
-    //mainWindow.show();
+  isBusy = true;
+  console.log('Busy Mode Actived', alertViewMode);
+  switch (alertViewMode) {
+    case 'rectangle':
+      createRectangleAlert();
+      break;
+    case 'circle':
+      createMainWindow();
+      break;
+    case 'none':
+
+      break;
+    default:
 
   }
-  createRectangleAlert();
 }
 
 function deactiveBusyMode() {
-  //console.log('Busy Mode Desactived');
+  isBusy = false;
+  console.log('Busy Mode Desactived',rectangleAlert[0]);
   if(mainWindow) {
-    //mainWindow.hide();
-
+    mainWindow.hide();
   }
-  destroyRectangleAlert()
+  if(rectangleAlert[0]) {
+      destroyRectangleAlert();
+  }
 }

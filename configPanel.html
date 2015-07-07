@@ -21,27 +21,29 @@
       </div>
 
       <div>
-        <label for="forAlertView">Active View Mode</label>
-        <div class="radio">
-          <label>
-            <input type="radio" name="optionsRadios" id="optionsRadios1" value="option1" checked>
-            Rectangle
-          </label>
-        </div>
-        <div class="radio">
-          <label>
-            <input type="radio" name="optionsRadios" id="optionsRadios2" value="option2">
-            Circle
-          </label>
-        </div>
-        <div class="radio disabled">
-          <label>
-            <input type="radio" name="optionsRadios" id="optionsRadios3" value="option3">
-            None
-          </label>
+         <div id="q_opt" class="btn-group" data-toggle="buttons">
+            <label for="forAlertView">Active View Mode</label>
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="optionsRadios1" value="rectangle" checked>
+                Rectangle
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="optionsRadios2" value="circle">
+                Circle
+              </label>
+            </div>
+            <div class="radio">
+              <label>
+                <input type="radio" name="optionsRadios" id="optionsRadios3" value="none">
+                None
+              </label>
+            </div>
         </div>
       </div>
-      <button id="done-button" type="button" class="btn btn-primary btn-lg active">Done</button>
+      <button id="done-button" type="button" class="btn btn-primary btn-sm active">Done</button>
 		</div>
     <script src="config.js"></script>
   </body>

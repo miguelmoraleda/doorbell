@@ -3,8 +3,8 @@ DoorBell is simple application that allow you to put your computer on an "Busy" 
 DoorBell is builded on top of [atom/Electron](https://github.com/atom/electron).
 
 ## Credits
-Michael Dobell - Creator
-Miguel Moraleda - Developer
+* Michael Dobell - Idea Creator
+* Miguel Moraleda - Developer
 
 ## Development
 Javascript Style Guide: https://github.com/Jam3/Javascript-Code-Conventions
