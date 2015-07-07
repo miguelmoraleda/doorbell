@@ -38,4 +38,20 @@ ipc.on('load-configurations', function(arg) {
   if(arg.hasOwnProperty('autoStart')) {
     autoLaunch.checked = arg.autoStart;
   }
+  if(arg.hasOwnProperty('alertViewMode')) {
+    switch (arg.alertViewMode) {
+      case 'rectangle':
+        radioButtons[0].checked = true;
+        break;
+      case 'circle':
+        radioButtons[1].checked = true;
+        break;
+      case 'none':
+        radioButtons[2].checked = true;
+        break;
+      default:
+
+    }
+    autoLaunch.checked = arg.autoStart;
+  }
 });

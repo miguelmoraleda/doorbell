@@ -5,11 +5,17 @@ var globalShortcut = require('global-shortcut');
 var Menu = require('menu');
 var Tray = require('tray');
 var ipc = require('ipc');
+var settings = require('./settings');
 
 var AutoLaunch = require('auto-launch');
 
 var autoStart = false;
-var alertViewMode = 'circle';
+var alertViewMode = 'rectangle';
+
+// Report crashes to our server.
+require('crash-reporter').start();
+
+//require('electron-debug')();
 
 var autoLauncher = new AutoLaunch({
     name: 'DoorBell',
@@ -28,7 +34,12 @@ autoLauncher.isEnabled(function(enabled) {
 
 ipc.on('alert-view-changed', function(event, arg) {
   alertViewMode = arg;
-
+  settings.set('alertViewMode', alertViewMode, function(err) {
+    if (err)
+      throw err
+    else
+      console.log('alertViewMode state saved', alertViewMode);
+  });
   if(isBusy) {
       deactiveBusyMode();
       activeBusyMode();
@@ -38,6 +49,12 @@ ipc.on('alert-view-changed', function(event, arg) {
 ipc.on('auto-launch-changed', function(event, arg) {
   if(!autoLauncher) return;
   autoStart = arg;
+  settings.set('autoStart', autoStart, function(err) {
+    if (err)
+      throw err
+    else
+      console.log('autoStart state saved', autoStart);
+  });
   if(autoStart) {
     autoLauncher.isEnabled(function(enabled) {
       if(enabled) return;
@@ -59,14 +76,11 @@ ipc.on('close-config', function(event, arg) {
 ipc.on('get-configurations', function(event, arg) {
   //console.log(arg);  // prints "ping"
   //event.sender.send('load-configurations', { autoStart: autoStart });
-  event.sender.send('load-configurations', { autoStart: autoStart });
+  event.sender.send('load-configurations', { autoStart: autoStart, alertViewMode: alertViewMode });
 });
 
 
-// Report crashes to our server.
-require('crash-reporter').start();
 
-require('electron-debug')();
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the javascript object is GCed.
@@ -97,10 +111,35 @@ app.on('ready', function() {
   workArea = atomScreen.getPrimaryDisplay().workArea;
   bounds = atomScreen.getPrimaryDisplay().bounds;
 
+  checkSettings();
+
   createTrayIcon();
 
   configShortcuts();
 });
+
+function checkSettings() {
+  settings.get('autoStart', function(err, value) {
+    if (err)
+      throw err
+
+      console.log('autoStart', value);
+    if (typeof value !== 'undefined') {
+      autoStart = value;
+      console.log('autoStart', value);
+    }
+  });
+  settings.get('alertViewMode', function(err, value) {
+    if (err)
+      throw err
+
+      console.log('alertViewMode', value);
+    if (typeof value !== 'undefined') {
+      alertViewMode = value;
+      console.log('alertViewMode', value);
+    }
+  });
+}
 
 function configShortcuts() {
   var ret = globalShortcut.register(activationShortcut, toogleBusyMode);
